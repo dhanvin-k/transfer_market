@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% block title %}{{ competition.name }} — Transfer Market
+<!-- Delete modal -->
+<div id="delete-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;align-items:center;justify-content:center;padding:20px;">
+  <div class="card" style="max-width:380px;width:100%;text-align:center;">
+    <div style="font-size:2rem;margin-bottom:8px;">⚠️</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:900;margin-bottom:8px;">Delete "{{ competition.name }}"?</div>
+    <div style="color:var(--text-dim);font-size:0.88rem;margin-bottom:20px;">This permanently deletes the competition, all auction data, squads, fixtures, and results. This cannot be undone.</div>
+    <div style="display:flex;gap:10px;">
+      <form method="post" action="{% url 'competition_delete' competition_id=competition.pk %}" style="flex:1;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-red" style="width:100%;padding:11px;">Yes, Delete Everything</button>
+      </form>
+      <button onclick="document.getElementById('delete-modal').style.display='none'" class="btn btn-ghost" style="flex:1;">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Leave modal -->
+<div id="leave-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;align-items:center;justify-content:center;padding:20px;">
+  <div class="card" style="max-width:360px;width:100%;text-align:center;">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:900;margin-bottom:8px;">Leave "{{ competition.name }}"?</div>
+    <div style="color:var(--text-dim);font-size:0.88rem;margin-bottom:20px;">You'll lose access to this competition. Your squad and bids will remain.</div>
+    <div style="display:flex;gap:10px;">
+      <form method="post" action="{% url 'competition_leave' competition_id=competition.pk %}" style="flex:1;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-red" style="width:100%;padding:11px;">Leave</button>
+      </form>
+      <button onclick="document.getElementById('leave-modal').style.display='none'" class="btn btn-ghost" style="flex:1;">Cancel</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block nav_home %}active
+<!-- Delete modal -->
+<div id="delete-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;align-items:center;justify-content:center;padding:20px;">
+  <div class="card" style="max-width:380px;width:100%;text-align:center;">
+    <div style="font-size:2rem;margin-bottom:8px;">⚠️</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:900;margin-bottom:8px;">Delete "{{ competition.name }}"?</div>
+    <div style="color:var(--text-dim);font-size:0.88rem;margin-bottom:20px;">This permanently deletes the competition, all auction data, squads, fixtures, and results. This cannot be undone.</div>
+    <div style="display:flex;gap:10px;">
+      <form method="post" action="{% url 'competition_delete' competition_id=competition.pk %}" style="flex:1;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-red" style="width:100%;padding:11px;">Yes, Delete Everything</button>
+      </form>
+      <button onclick="document.getElementById('delete-modal').style.display='none'" class="btn btn-ghost" style="flex:1;">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Leave modal -->
+<div id="leave-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;align-items:center;justify-content:center;padding:20px;">
+  <div class="card" style="max-width:360px;width:100%;text-align:center;">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:900;margin-bottom:8px;">Leave "{{ competition.name }}"?</div>
+    <div style="color:var(--text-dim);font-size:0.88rem;margin-bottom:20px;">You'll lose access to this competition. Your squad and bids will remain.</div>
+    <div style="display:flex;gap:10px;">
+      <form method="post" action="{% url 'competition_leave' competition_id=competition.pk %}" style="flex:1;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-red" style="width:100%;padding:11px;">Leave</button>
+      </form>
+      <button onclick="document.getElementById('leave-modal').style.display='none'" class="btn btn-ghost" style="flex:1;">Cancel</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+    <div>
+      <div class="page-title">{{ competition.name }}</div>
+      <div class="page-sub">{{ competition.get_format_display }} · {{ competition.participants.count }} managers · Invite: <strong style="color:var(--gold);letter-spacing:0.05em;">{{ competition.invite_code }}</strong></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <a href="{% url 'auction_room' competition_id=competition.pk %}" class="btn btn-gold">Go to Auction →</a>
+      {% if request.user == competition.created_by %}
+      <button onclick="document.getElementById('delete-modal').style.display='flex'" class="btn btn-ghost" style="border-color:rgba(255,23,68,0.3);color:var(--red);">Delete</button>
+      {% else %}
+      <button onclick="document.getElementById('leave-modal').style.display='flex'" class="btn btn-ghost">Leave</button>
+      {% endif %}
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-bottom:28px;">
+    <a href="{% url 'auction_room' competition_id=competition.pk %}" class="nav-tile">
+      <div class="tile-icon">🔨</div>
+      <div class="tile-label">Auction Room</div>
+      <div class="tile-sub">{% if competition.status == 'auction' %}Live now{% else %}Start bidding{% endif %}</div>
+    </a>
+    <a href="{% url 'squad_view' competition_id=competition.pk %}" class="nav-tile">
+      <div class="tile-icon">👥</div>
+      <div class="tile-label">Squads</div>
+      <div class="tile-sub">View all rosters</div>
+    </a>
+    <a href="{% url 'fixture_list' competition_id=competition.pk %}" class="nav-tile">
+      <div class="tile-icon">📅</div>
+      <div class="tile-label">Fixtures</div>
+      <div class="tile-sub">Schedule &amp; results</div>
+    </a>
+    <a href="{% url 'leaderboard' competition_id=competition.pk %}" class="nav-tile">
+      <div class="tile-icon">🏆</div>
+      <div class="tile-label">Table</div>
+      <div class="tile-sub">Standings &amp; H2H</div>
+    </a>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div class="card">
+      <div class="card-title">Auction Settings</div>
+      <table class="table">
+        <tr><td style="color:var(--text-dim)">Starting Budget</td><td>${{ competition.starting_budget|floatformat:0 }}</td></tr>
+        <tr><td style="color:var(--text-dim)">Min Bid Increment</td><td>${{ competition.min_bid_increment|floatformat:0 }}</td></tr>
+        <tr><td style="color:var(--text-dim)">Timer Per Player</td><td>{{ competition.transfer_window_seconds }}s</td></tr>
+        <tr><td style="color:var(--text-dim)">Squad Size</td><td>{{ competition.squad_size }}</td></tr>
+        <tr><td style="color:var(--text-dim)">Min OVR</td><td>{{ competition.min_player_rating }}</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">Managers</div>
+      {% for user in competition.participants.all %}
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.8rem;color:var(--gold);">
+          {{ user.display_name|default:user.username|slice:":2"|upper }}
+        </div>
+        <span style="font-weight:600;">{{ user.display_name|default:user.username }}</span>
+        {% if user == competition.created_by %}<span class="badge badge-gold">Host</span>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Delete modal -->
+<div id="delete-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;align-items:center;justify-content:center;padding:20px;">
+  <div class="card" style="max-width:380px;width:100%;text-align:center;">
+    <div style="font-size:2rem;margin-bottom:8px;">⚠️</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:900;margin-bottom:8px;">Delete "{{ competition.name }}"?</div>
+    <div style="color:var(--text-dim);font-size:0.88rem;margin-bottom:20px;">This permanently deletes the competition, all auction data, squads, fixtures, and results. This cannot be undone.</div>
+    <div style="display:flex;gap:10px;">
+      <form method="post" action="{% url 'competition_delete' competition_id=competition.pk %}" style="flex:1;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-red" style="width:100%;padding:11px;">Yes, Delete Everything</button>
+      </form>
+      <button onclick="document.getElementById('delete-modal').style.display='none'" class="btn btn-ghost" style="flex:1;">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Leave modal -->
+<div id="leave-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;align-items:center;justify-content:center;padding:20px;">
+  <div class="card" style="max-width:360px;width:100%;text-align:center;">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:900;margin-bottom:8px;">Leave "{{ competition.name }}"?</div>
+    <div style="color:var(--text-dim);font-size:0.88rem;margin-bottom:20px;">You'll lose access to this competition. Your squad and bids will remain.</div>
+    <div style="display:flex;gap:10px;">
+      <form method="post" action="{% url 'competition_leave' competition_id=competition.pk %}" style="flex:1;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-red" style="width:100%;padding:11px;">Leave</button>
+      </form>
+      <button onclick="document.getElementById('leave-modal').style.display='none'" class="btn btn-ghost" style="flex:1;">Cancel</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_style %}
+.nav-tile{display:block;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;text-decoration:none;transition:border-color 0.2s,transform 0.15s;}
+.nav-tile:hover{border-color:var(--gold);transform:translateY(-2px);}
+.tile-icon{font-size:1.8rem;margin-bottom:8px;}
+.tile-label{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;margin-bottom:2px;}
+.tile-sub{font-size:0.8rem;color:var(--text-dim);}
+
+<!-- Delete modal -->
+<div id="delete-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;align-items:center;justify-content:center;padding:20px;">
+  <div class="card" style="max-width:380px;width:100%;text-align:center;">
+    <div style="font-size:2rem;margin-bottom:8px;">⚠️</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:900;margin-bottom:8px;">Delete "{{ competition.name }}"?</div>
+    <div style="color:var(--text-dim);font-size:0.88rem;margin-bottom:20px;">This permanently deletes the competition, all auction data, squads, fixtures, and results. This cannot be undone.</div>
+    <div style="display:flex;gap:10px;">
+      <form method="post" action="{% url 'competition_delete' competition_id=competition.pk %}" style="flex:1;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-red" style="width:100%;padding:11px;">Yes, Delete Everything</button>
+      </form>
+      <button onclick="document.getElementById('delete-modal').style.display='none'" class="btn btn-ghost" style="flex:1;">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Leave modal -->
+<div id="leave-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;align-items:center;justify-content:center;padding:20px;">
+  <div class="card" style="max-width:360px;width:100%;text-align:center;">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:900;margin-bottom:8px;">Leave "{{ competition.name }}"?</div>
+    <div style="color:var(--text-dim);font-size:0.88rem;margin-bottom:20px;">You'll lose access to this competition. Your squad and bids will remain.</div>
+    <div style="display:flex;gap:10px;">
+      <form method="post" action="{% url 'competition_leave' competition_id=competition.pk %}" style="flex:1;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-red" style="width:100%;padding:11px;">Leave</button>
+      </form>
+      <button onclick="document.getElementById('leave-modal').style.display='none'" class="btn btn-ghost" style="flex:1;">Cancel</button>
+    </div>
+  </div>
+</div>
+{% endblock %}

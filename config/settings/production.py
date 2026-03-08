@@ -1,0 +1,13 @@
+from .base import *
+import os
+
+DEBUG = False
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
+SECRET_KEY = env('SECRET_KEY')
+
+# DATABASE_URL and REDIS_URL set by Railway automatically
+
+SECURE_HSTS_SECONDS = 31536000
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True

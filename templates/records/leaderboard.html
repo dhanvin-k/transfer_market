@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Table — {{ competition.name }}{% endblock %}
+{% block nav_records %}active{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <div class="page-title">Standings</div>
+    <div class="page-sub">{{ competition.name }}</div>
+  </div>
+
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:24px;">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>#</th><th>Manager</th><th>P</th><th>W</th><th>D</th><th>L</th>
+          <th>GF</th><th>GA</th><th>GD</th><th>Pts</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for rec in records %}
+        <tr {% if rec.user == request.user %}style="background:rgba(240,192,64,0.05);"{% endif %}>
+          <td style="color:var(--text-dim);font-weight:600;">{{ forloop.counter }}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="width:28px;height:28px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.72rem;color:var(--gold);">{{ rec.user.display_name|default:rec.user.username|slice:":2"|upper }}</div>
+              <span style="font-weight:600;">{{ rec.user.display_name|default:rec.user.username }}</span>
+            </div>
+          </td>
+          <td>{{ rec.played }}</td>
+          <td style="color:var(--green);font-weight:600;">{{ rec.wins }}</td>
+          <td>{{ rec.draws }}</td>
+          <td style="color:var(--red);">{{ rec.losses }}</td>
+          <td>{{ rec.goals_for }}</td>
+          <td>{{ rec.goals_against }}</td>
+          <td style="{% if rec.goal_difference > 0 %}color:var(--green){% elif rec.goal_difference < 0 %}color:var(--red){% endif %}">
+            {% if rec.goal_difference > 0 %}+{% endif %}{{ rec.goal_difference }}
+          </td>
+          <td style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;color:var(--gold);">{{ rec.points }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if participants|length > 1 %}
+  <div class="card" style="padding:0;overflow:hidden;">
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border);">
+      <div class="card-title" style="margin:0;">Head-to-Head</div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="table" style="min-width:400px;">
+        <thead>
+          <tr>
+            <th>vs</th>
+            {% for opp in participants %}<th style="text-align:center;">{{ opp.display_name|default:opp.username|slice:":6" }}</th>{% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in participants %}
+          <tr>
+            <td style="font-weight:600;">{{ user.display_name|default:user.username|slice:":8" }}</td>
+            {% for opp in participants %}
+            <td style="text-align:center;">
+              {% if user == opp %}
+              <span style="color:var(--text-dim);">—</span>
+              {% else %}
+                {% with rec=h2h|dictsort:"0" %}{% endwith %}
+                {% for uid,opps in h2h.items %}
+                  {% if uid == user.pk %}
+                    {% for oid,r in opps.items %}
+                      {% if oid == opp.pk %}
+                        {% if r %}
+                        <span style="font-size:0.82rem;font-weight:600;{% if r.wins > r.losses %}color:var(--green){% elif r.losses > r.wins %}color:var(--red){% endif %}">{{ r.wins }}W {{ r.draws }}D {{ r.losses }}L</span>
+                        {% else %}<span style="color:var(--text-dim);">0–0</span>{% endif %}
+                      {% endif %}
+                    {% endfor %}
+                  {% endif %}
+                {% endfor %}
+              {% endif %}
+            </td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

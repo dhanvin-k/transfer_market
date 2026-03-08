@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}My Competitions — Transfer Market{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+    <div>
+      <div class="page-title">Your Competitions</div>
+      <div class="page-sub">Manage auctions, track results, and build the perfect squad.</div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <a href="{% url 'competition_create' %}" class="btn btn-gold">+ New</a>
+      <a href="{% url 'competition_join' %}" class="btn btn-ghost">Join with Code</a>
+    </div>
+  </div>
+  {% if competitions %}
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">
+    {% for comp in competitions %}
+    <a href="{% url 'competition_detail' competition_id=comp.pk %}" class="comp-card-link">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem;margin-bottom:6px;">{{ comp.name }}</div>
+      <div style="font-size:0.82rem;color:var(--text-dim);display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+        <span>{{ comp.participants.count }} managers</span>
+        <span>{{ comp.get_format_display }}</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <span class="badge {% if comp.status == 'auction' %}badge-green{% elif comp.status == 'playing' %}badge-blue{% elif comp.status == 'completed' %}badge-dim{% else %}badge-gold{% endif %}">{{ comp.get_status_display }}</span>
+        <span style="font-family:'Barlow Condensed',sans-serif;font-size:0.82rem;color:var(--text-dim);letter-spacing:0.05em;">{{ comp.invite_code }}</span>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="text-align:center;padding:80px 20px;color:var(--text-dim);">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.5rem;font-weight:700;margin-bottom:8px;">No competitions yet</div>
+    <p>Create one or join a friend's with an invite code.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block extra_style %}
+.comp-card-link{display:block;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;transition:border-color 0.2s,transform 0.15s;text-decoration:none;}
+.comp-card-link:hover{border-color:var(--gold);transform:translateY(-2px);}
+{% endblock %}

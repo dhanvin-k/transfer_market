@@ -1,0 +1,70 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyd
+*.pyo
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+wheels/
+pip-wheel-metadata/
+
+# Virtual environment
+venv/
+env/
+.env/
+.venv/
+
+# Environment variables (NEVER commit these)
+.env
+.env.local
+.env.production
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+/staticfiles/
+/mediafiles/
+media/
+
+# Database
+*.sql
+*.dump
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# DATA files
+*.csv
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# Node (for any frontend tooling)
+node_modules/
+npm-debug.log*
+
+# Coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Redis dump
+dump.rdb

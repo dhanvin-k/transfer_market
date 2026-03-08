@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% block title %}Auction — {{ competition.name }}{% endblock %}
+{% block nav_auction %}active{% endblock %}
+{% block extra_style %}
+.lot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
+.lot-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;position:relative;transition:border-color 0.2s;}
+.lot-card.leading{border-color:rgba(0,230,118,0.4);}
+.lot-card:hover{border-color:rgba(240,192,64,0.3);}
+.lot-ovr{position:absolute;top:14px;right:14px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.5rem;color:var(--gold);line-height:1;}
+.lot-ovr span{font-size:0.65rem;font-weight:600;color:var(--text-dim);display:block;text-align:right;}
+.lot-name{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;margin-bottom:2px;padding-right:42px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.lot-meta{font-size:0.75rem;color:var(--text-dim);margin-bottom:8px;}
+.lot-price{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem;color:var(--gold);}
+.lot-leader{font-size:0.75rem;color:var(--text-dim);margin-top:2px;}
+.lot-timer{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.8rem;color:var(--text-dim);margin-top:5px;}
+.lot-timer.urgent{color:var(--red);}
+.bid-row{display:flex;gap:7px;margin-top:10px;}
+.bid-input{flex:1;min-width:0;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;padding:7px 10px;outline:none;}
+.bid-input:focus{border-color:var(--gold);}
+.btn-bid{background:var(--gold);color:#000;border:none;border-radius:6px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.85rem;padding:7px 14px;cursor:pointer;white-space:nowrap;}
+.btn-bid:hover{background:#ffd54f;}
+.status-bar{display:flex;gap:24px;flex-wrap:wrap;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 20px;margin-bottom:20px;align-items:center;}
+.sitem{display:flex;flex-direction:column;gap:2px;}
+.slabel{font-size:0.68rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);}
+.sval{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.2rem;}
+.dot-live{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:dp 1.5s infinite;margin-right:5px;}
+@keyframes dp{0%,100%{opacity:1}50%{opacity:.4}}
+.section-sep{font-family:'Barlow Condensed',sans-serif;font-size:0.72rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-dim);margin:24px 0 12px;}
+.day-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);}
+.day-row:last-child{border-bottom:none;}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <!-- Status bar -->
+  <div class="status-bar">
+    <div class="sitem">
+      <span class="slabel">Budget</span>
+      <span class="sval" style="color:var(--green);">{% if budget %}${{ budget.remaining_budget|floatformat:0 }}{% else %}—{% endif %}</span>
+    </div>
+    <div class="sitem">
+      <span class="slabel">Window</span>
+      <span class="sval" style="font-size:0.95rem;">
+        {% if today_window %}
+          {% if today_window.is_open %}<span class="dot-live"></span>Open until {{ today_window.closes_at|time:"g:i A" }}
+          {% elif today_window.is_past %}Closed today
+          {% else %}Opens {{ today_window.opens_at|time:"g:i A" }}{% endif %}
+        {% else %}No window today{% endif %}
+      </span>
+    </div>
+    <div class="sitem">
+      <span class="slabel">Leading</span>
+      <span class="sval">{{ my_leading|length }}</span>
+    </div>
+    {% if competition.created_by == request.user %}
+    <div style="margin-left:auto;display:flex;gap:10px;">
+      <a href="{% url 'auction_schedule' competition_id=competition.pk %}" class="btn btn-ghost btn-sm">📅 Schedule</a>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if not session.started_at %}
+  <div style="text-align:center;padding:70px 20px;">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:900;margin-bottom:8px;">No Auction Schedule Yet</div>
+    <div style="color:var(--text-dim);margin-bottom:20px;">{% if competition.created_by == request.user %}Set up the schedule to start auctioning players.{% else %}Waiting for the host to set up the schedule.{% endif %}</div>
+    {% if competition.created_by == request.user %}
+    <a href="{% url 'auction_schedule' competition_id=competition.pk %}" class="btn btn-gold" style="font-size:1.05rem;padding:12px 32px;">Set Up Schedule →</a>
+    {% endif %}
+  </div>
+  {% else %}
+
+  {% if today_window and today_window.is_open %}
+  <div class="section-sep"><span class="dot-live"></span>Today's Auction — Closes {{ today_window.closes_at|time:"g:i A" }}</div>
+  {% if active_lots %}
+  <div class="lot-grid">
+    {% for lot in active_lots %}
+    <div class="lot-card {% if lot.id in my_leading %}leading{% endif %}" id="lot-{{ lot.id }}">
+      <div class="lot-ovr">{{ lot.player.overall }}<span>OVR</span></div>
+      <span class="pos" style="font-size:0.65rem;">{{ lot.player.position }}</span>
+      <div class="lot-name">{{ lot.player.name }}</div>
+      <div class="lot-meta">{{ lot.player.club.name|default:"—" }} · {{ lot.player.nationality }}{% if lot.relisted %} · 🔄 Relisted{% endif %}</div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;">
+        {% for k,v in lot.player.stats_dict.items %}
+        <div class="stat-pill" style="padding:3px 7px;min-width:34px;"><span class="stat-val" style="font-size:0.88rem;">{{ v }}</span><span class="stat-key">{{ k }}</span></div>
+        {% endfor %}
+      </div>
+      <div class="lot-price">${{ lot.current_price|floatformat:0 }}</div>
+      <div class="lot-leader">{% if lot.current_winner %}🏆 {{ lot.current_winner.display_name|default:lot.current_winner.username }}{% else %}No bids yet · starts at ${{ lot.starting_price|floatformat:0 }}{% endif %}</div>
+      <div class="lot-timer {% if lot.seconds_left < 600 %}urgent{% endif %}" id="timer-{{ lot.id }}" data-seconds="{{ lot.seconds_left }}">⏱ <span class="tval"></span></div>
+      <div class="bid-row">
+        <input type="number" class="bid-input" id="bid-{{ lot.id }}" placeholder="${{ lot.current_price|floatformat:0 }}" step="{{ competition.min_bid_increment }}">
+        <button class="btn-bid" onclick="submitBid({{ lot.id }})">BID</button>
+      </div>
+      <div id="err-{{ lot.id }}" style="font-size:0.75rem;color:var(--red);margin-top:4px;display:none;"></div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="color:var(--text-dim);padding:20px 0;">No players listed for today's window.</div>
+  {% endif %}
+  {% elif today_window and today_window.is_future %}
+  <div class="card" style="text-align:center;padding:32px;">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:900;margin-bottom:4px;">Today's window opens at {{ today_window.opens_at|time:"g:i A" }}</div>
+    <div style="color:var(--text-dim);">{{ today_window.lots.count }} players ready — come back then</div>
+  </div>
+  {% endif %}
+
+  {% if upcoming_days %}
+  <div class="section-sep">Upcoming Days</div>
+  <div class="card" style="padding:0;overflow:hidden;">
+    {% for day in upcoming_days %}
+    <div class="day-row">
+      <div>
+        <div style="font-weight:600;">{{ day.date|date:"D, M j" }}{% if day.label %} — {{ day.label }}{% endif %}</div>
+        <div style="font-size:0.78rem;color:var(--text-dim);">{{ day.opens_at|time:"g:i A" }} – {{ day.closes_at|time:"g:i A" }} · {{ day.lots.count }} players</div>
+      </div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:flex-end;">
+        {% for lot in day.lots.all|slice:":4" %}<span style="font-size:0.72rem;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:2px 7px;">{{ lot.player.name }} <span style="color:var(--gold);">{{ lot.player.overall }}</span></span>{% endfor %}
+        {% if day.lots.count > 4 %}<span style="font-size:0.72rem;color:var(--text-dim);">+{{ day.lots.count|add:"-4" }}</span>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if past_days %}
+  <div class="section-sep">Recent Results</div>
+  <div class="card" style="padding:0;overflow:hidden;">
+    {% for day in past_days %}
+    <div style="padding:12px 16px;border-bottom:1px solid var(--border);">
+      <div style="font-weight:600;margin-bottom:8px;font-size:0.88rem;">{{ day.date|date:"D, M j" }}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:7px;">
+        {% for lot in day.lots.all %}
+        <div style="font-size:0.78rem;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:5px 10px;">
+          <span style="font-weight:600;">{{ lot.player.name }}</span> <span style="color:var(--gold);">{{ lot.player.overall }}</span>
+          {% if lot.sold_to %} → <span style="color:var(--green);">{{ lot.sold_to.display_name|default:lot.sold_to.username }}</span> <span style="color:var(--text-dim);">${{ lot.sold_price|floatformat:0 }}</span>
+          {% else %} <span style="color:var(--text-dim);">unsold</span>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CSRF = '{{ csrf_token }}';
+
+async function submitBid(lotId) {
+  const input = document.getElementById('bid-' + lotId);
+  const errEl = document.getElementById('err-' + lotId);
+  const amount = parseInt(input.value.replace(/,/g,''), 10);
+  errEl.style.display = 'none';
+  if (!amount || isNaN(amount)) { showErr(errEl, 'Enter an amount.'); return; }
+  const fd = new FormData();
+  fd.append('amount', amount);
+  const res = await fetch(`/auction/lot/${lotId}/bid/`, {
+    method:'POST', body:fd, headers:{'X-CSRFToken': CSRF}
+  });
+  const data = await res.json();
+  if (data.ok) { input.value = ''; location.reload(); }
+  else showErr(errEl, data.error);
+}
+
+function showErr(el, msg) {
+  el.textContent = msg; el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 4000);
+}
+
+function fmtTime(s) {
+  if (s >= 3600) return `${Math.floor(s/3600)}h ${Math.floor((s%3600)/60)}m`;
+  if (s >= 60) return `${Math.floor(s/60)}m ${s%60}s`;
+  return `${s}s`;
+}
+
+// Local countdown
+document.querySelectorAll('[data-seconds]').forEach(el => {
+  let s = parseInt(el.dataset.seconds);
+  const valEl = el.querySelector('.tval');
+  if (valEl) valEl.textContent = fmtTime(s);
+  const iv = setInterval(() => {
+    s--;
+    if (s <= 0) { clearInterval(iv); el.textContent = '⏱ Closing…'; setTimeout(() => location.reload(), 2000); return; }
+    if (valEl) valEl.textContent = fmtTime(s);
+    el.classList.toggle('urgent', s < 600);
+  }, 1000);
+});
+</script>
+{% endblock %}

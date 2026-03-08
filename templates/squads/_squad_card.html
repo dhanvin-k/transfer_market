@@ -1,0 +1,23 @@
+<div class="card" style="margin-bottom:16px;{% if highlight %}border-color:rgba(240,192,64,0.3);{% endif %}">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;">
+      {{ squad.manager.display_name|default:squad.manager.username }}{% if squad.name %} — {{ squad.name }}{% endif %}
+    </div>
+    <span style="font-size:0.8rem;color:var(--text-dim);">{{ squad.squadslot_set.count }} players</span>
+  </div>
+  {% if squad.squadslot_set.all %}
+  <div style="display:flex;flex-wrap:wrap;gap:8px;">
+    {% for slot in squad.squadslot_set.all %}
+    <a href="{% url 'player_detail' pk=slot.player.pk %}" style="display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;text-decoration:none;transition:border-color 0.15s;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'">
+      <span class="pos" style="font-size:0.65rem;">{{ slot.player.position }}</span>
+      <div>
+        <div style="font-weight:600;font-size:0.85rem;">{{ slot.player.name }}</div>
+        <div style="font-size:0.72rem;color:var(--text-dim);">{{ slot.player.overall }} OVR · {% if slot.price_paid %}${{ slot.price_paid|floatformat:0 }}{% endif %}</div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="color:var(--text-dim);font-size:0.85rem;">No players yet.</div>
+  {% endif %}
+</div>

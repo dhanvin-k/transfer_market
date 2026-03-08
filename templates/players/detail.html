@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}{{ player.name }} — Transfer Market{% endblock %}
+{% block content %}
+<div class="container" style="max-width:760px;">
+  <a href="{% url 'player_search' %}" style="color:var(--text-dim);font-size:0.85rem;">← Back to Players</a>
+  <div style="display:flex;gap:24px;margin-top:20px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;position:relative;">
+    {% if player.photo_url %}
+    <img src="{{ player.photo_url }}" style="width:120px;height:120px;border-radius:8px;object-fit:cover;border:1px solid var(--border);flex-shrink:0;">
+    {% else %}
+    <div style="width:120px;height:120px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:2.5rem;font-weight:900;color:var(--text-dim);flex-shrink:0;">{{ player.name|slice:":1" }}</div>
+    {% endif %}
+    <div style="flex:1;">
+      <span class="pos" style="margin-bottom:8px;display:inline-block;">{{ player.position }}</span>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:900;line-height:1;margin-bottom:4px;">{{ player.name }}</div>
+      <div style="color:var(--text-dim);font-size:0.88rem;margin-bottom:16px;">{{ player.club.name|default:"No Club" }} · {{ player.nationality }} · {{ player.age }}y · {{ player.height_cm }}cm · {{ player.weight_kg }}kg</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        {% for k,v in player.stats_dict.items %}
+        <div class="stat-pill"><span class="stat-val">{{ v }}</span><span class="stat-key">{{ k }}</span></div>
+        {% endfor %}
+      </div>
+    </div>
+    <div style="position:absolute;top:20px;right:20px;text-align:right;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:3rem;line-height:1;color:var(--gold);">{{ player.overall }}</div>
+      <div style="font-size:0.75rem;color:var(--text-dim);">OVR</div>
+    </div>
+  </div>
+
+  {% if not player.is_gk %}
+  <div class="card" style="margin-top:16px;">
+    <div class="card-title">Detailed Attributes</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;">
+      {% for label,val in player.detailed_stats %}
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:var(--bg3);border-radius:6px;">
+        <span style="font-size:0.82rem;color:var(--text-dim);">{{ label }}</span>
+        <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.95rem;">{{ val }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

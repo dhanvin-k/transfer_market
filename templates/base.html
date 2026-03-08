@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Transfer Market{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #f0c040; --gold-dim: #a07c1a;
+    --green: #00e676; --red: #ff1744; --blue: #448aff;
+    --bg: #0a0c10; --bg2: #111318; --bg3: #181c24;
+    --border: rgba(255,255,255,0.07);
+    --text: #e8eaf0; --text-dim: #6b7280;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Barlow', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  a { color: inherit; text-decoration: none; }
+
+  /* Nav */
+  .nav {
+    display: flex; align-items: center; gap: 0;
+    background: var(--bg2); border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .nav-logo {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 900;
+    font-size: 1.1rem; letter-spacing: 0.08em; color: var(--gold);
+    text-transform: uppercase; padding: 14px 20px;
+    border-right: 1px solid var(--border); white-space: nowrap;
+  }
+  .nav-links { display: flex; flex: 1; overflow-x: auto; }
+  .nav-link {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 600;
+    font-size: 0.85rem; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 14px 16px; color: var(--text-dim); white-space: nowrap;
+    border-bottom: 2px solid transparent; transition: all 0.15s;
+  }
+  .nav-link:hover { color: var(--text); }
+  .nav-link.active { color: var(--gold); border-bottom-color: var(--gold); }
+  .nav-right { padding: 0 16px; display: flex; align-items: center; gap: 12px; margin-left: auto; }
+  .nav-user { font-size: 0.82rem; color: var(--text-dim); white-space: nowrap; }
+
+  /* Buttons */
+  .btn {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+    font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase;
+    padding: 8px 18px; border-radius: 7px; border: none; cursor: pointer;
+    text-decoration: none; display: inline-block; transition: all 0.15s;
+  }
+  .btn-gold { background: var(--gold); color: #000; }
+  .btn-gold:hover { background: #ffd54f; }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text-dim); }
+  .btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+  .btn-sm { padding: 5px 12px; font-size: 0.8rem; }
+  .btn-red { background: var(--red); color: #fff; }
+
+  /* Page container */
+  .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+  .page-header { margin-bottom: 28px; }
+  .page-title { font-family: 'Barlow Condensed', sans-serif; font-size: 2rem; font-weight: 900; letter-spacing: 0.02em; }
+  .page-sub { color: var(--text-dim); margin-top: 4px; font-size: 0.9rem; }
+
+  /* Cards */
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+  .card-title { font-family: 'Barlow Condensed', sans-serif; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 14px; }
+
+  /* Table */
+  .table { width: 100%; border-collapse: collapse; }
+  .table th { font-family: 'Barlow Condensed', sans-serif; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: left; }
+  .table td { padding: 11px 12px; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
+  .table tr:last-child td { border-bottom: none; }
+  .table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* Badge */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; }
+  .badge-gold { background: rgba(240,192,64,0.15); color: var(--gold); }
+  .badge-green { background: rgba(0,230,118,0.15); color: var(--green); }
+  .badge-blue { background: rgba(68,138,255,0.15); color: var(--blue); }
+  .badge-red { background: rgba(255,23,68,0.15); color: var(--red); }
+  .badge-dim { background: rgba(255,255,255,0.06); color: var(--text-dim); }
+
+  /* Position badge */
+  .pos { display: inline-block; padding: 2px 7px; border-radius: 4px; font-family: 'Barlow Condensed', sans-serif; font-size: 0.72rem; font-weight: 700; background: var(--gold); color: #000; }
+
+  /* Stat pill */
+  .stat-pill { display: flex; flex-direction: column; align-items: center; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 5px 9px; min-width: 40px; }
+  .stat-val { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 1rem; line-height: 1; }
+  .stat-key { font-size: 0.6rem; font-weight: 600; letter-spacing: 0.08em; color: var(--text-dim); text-transform: uppercase; margin-top: 2px; }
+
+  /* Flash messages */
+  .messages { padding: 0 24px; margin-top: 12px; }
+  .message { padding: 10px 14px; border-radius: 8px; font-size: 0.88rem; margin-bottom: 8px; }
+  .message-error { background: rgba(255,23,68,0.12); border: 1px solid var(--red); color: var(--red); }
+  .message-success { background: rgba(0,230,118,0.1); border: 1px solid var(--green); color: var(--green); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  {% block extra_style %}{% endblock %}
+</style>
+{% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/" class="nav-logo">⚽ TM</a>
+  <div class="nav-links">
+    {% if competition %}
+    <a href="{% url 'competition_detail' competition_id=competition.pk %}" class="nav-link {% block nav_home %}{% endblock %}">Overview</a>
+    <a href="{% url 'auction_room' competition_id=competition.pk %}" class="nav-link {% block nav_auction %}{% endblock %}">Auction</a>
+    <a href="{% url 'squad_view' competition_id=competition.pk %}" class="nav-link {% block nav_squads %}{% endblock %}">Squads</a>
+    <a href="{% url 'fixture_list' competition_id=competition.pk %}" class="nav-link {% block nav_fixtures %}{% endblock %}">Fixtures</a>
+    <a href="{% url 'leaderboard' competition_id=competition.pk %}" class="nav-link {% block nav_records %}{% endblock %}">Table</a>
+    <a href="{% url 'player_search' %}" class="nav-link {% block nav_players %}{% endblock %}">Players</a>
+    <a href="{% url 'trade_hub' competition_id=competition.pk %}" class="nav-link {% block nav_trades %}{% endblock %}">Trades</a>
+    {% else %}
+    <a href="{% url 'player_search' %}" class="nav-link">Players</a>
+    {% endif %}
+  </div>
+  <div class="nav-right">
+    <span class="nav-user">{{ request.user.display_name|default:request.user.username }}</span>
+    <a href="/" class="btn btn-ghost btn-sm">My Comps</a>
+    <a href="{% url 'account_logout' %}" class="btn btn-ghost btn-sm">Logout</a>
+  </div>
+</nav>
+
+{% if messages %}
+<div class="messages">
+  {% for msg in messages %}
+  <div class="message message-{{ msg.tags|default:'info' }}">{{ msg }}</div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% block content %}{% endblock %}
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

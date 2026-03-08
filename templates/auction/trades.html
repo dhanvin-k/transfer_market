@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+{% block title %}Trades — {{ competition.name }}{% endblock %}
+{% block extra_style %}
+.trade-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;}
+.trade-side{flex:1;min-width:0;}
+.trade-arrow{font-size:1.4rem;color:var(--text-dim);padding:0 10px;flex-shrink:0;align-self:center;}
+.player-tag{display:inline-flex;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:3px 8px;font-size:0.78rem;margin:3px 3px 3px 0;}
+.trade-status-pending{color:var(--gold);}
+.trade-status-accepted{color:var(--green);}
+.trade-status-declined,.trade-status-cancelled{color:var(--text-dim);}
+.tab-btn{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.85rem;letter-spacing:0.07em;text-transform:uppercase;padding:8px 18px;border:none;background:transparent;color:var(--text-dim);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;}
+.tab-btn.active{color:var(--gold);border-bottom-color:var(--gold);}
+.tab-panel{display:none;}.tab-panel.active{display:block;}
+.form-label{display:block;font-size:0.75rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px;}
+.form-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:0.9rem;padding:9px 12px;outline:none;}
+.form-input:focus{border-color:var(--gold);}
+.player-select-area{background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:10px;max-height:180px;overflow-y:auto;}
+.p-checkbox{display:flex;align-items:center;gap:8px;padding:5px 0;cursor:pointer;font-size:0.85rem;}
+.p-checkbox:hover{color:var(--gold);}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+    <div>
+      <div class="page-title">Transfer Market</div>
+      <div class="page-sub">{{ competition.name }} · Trade players with other managers</div>
+    </div>
+    {% if budget %}<div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;color:var(--green);">Budget: ${{ budget.remaining_budget|floatformat:0 }}</div>{% endif %}
+  </div>
+
+  <div style="border-bottom:1px solid var(--border);margin-bottom:20px;display:flex;gap:0;">
+    <button class="tab-btn active" onclick="switchTab('incoming', this)">
+      Incoming {% if incoming %}<span style="background:var(--red);color:#fff;border-radius:10px;padding:1px 6px;font-size:0.7rem;">{{ incoming|length }}</span>{% endif %}
+    </button>
+    <button class="tab-btn" onclick="switchTab('outgoing', this)">Outgoing</button>
+    <button class="tab-btn" onclick="switchTab('new', this)">+ New Offer</button>
+    <button class="tab-btn" onclick="switchTab('history', this)">History</button>
+  </div>
+
+  <!-- INCOMING -->
+  <div class="tab-panel active" id="tab-incoming">
+    {% if incoming %}
+    {% for offer in incoming %}
+    <div class="trade-card">
+      <div style="display:flex;gap:0;margin-bottom:10px;">
+        <div class="trade-side">
+          <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:5px;">They Offer</div>
+          {% if offer.cash_offered %}<div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;color:var(--green);margin-bottom:4px;">${{ offer.cash_offered|floatformat:0 }}</div>{% endif %}
+          {% for p in offer.players_offered.all %}<span class="player-tag"><span class="pos" style="font-size:0.6rem;">{{ p.position }}</span> {{ p.name }} <span style="color:var(--gold);">{{ p.overall }}</span></span>{% endfor %}
+          {% if not offer.cash_offered and not offer.players_offered.all %}—{% endif %}
+        </div>
+        <div class="trade-arrow">⇄</div>
+        <div class="trade-side" style="text-align:right;">
+          <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:5px;">They Want</div>
+          {% if offer.cash_wanted %}<div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;color:var(--red);margin-bottom:4px;">${{ offer.cash_wanted|floatformat:0 }}</div>{% endif %}
+          {% for p in offer.players_wanted.all %}<span class="player-tag"><span class="pos" style="font-size:0.6rem;">{{ p.position }}</span> {{ p.name }} <span style="color:var(--gold);">{{ p.overall }}</span></span>{% endfor %}
+          {% if not offer.cash_wanted and not offer.players_wanted.all %}—{% endif %}
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div>
+          <span style="font-weight:600;">From: {{ offer.from_manager.display_name|default:offer.from_manager.username }}</span>
+          {% if offer.message %}<div style="font-size:0.8rem;color:var(--text-dim);font-style:italic;margin-top:2px;">"{{ offer.message }}"</div>{% endif %}
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-gold btn-sm" onclick="respondTrade({{ offer.pk }}, 'accept')">Accept</button>
+          <button class="btn btn-ghost btn-sm" onclick="respondTrade({{ offer.pk }}, 'decline')">Decline</button>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div style="color:var(--text-dim);padding:40px 0;text-align:center;">No incoming offers.</div>
+    {% endif %}
+  </div>
+
+  <!-- OUTGOING -->
+  <div class="tab-panel" id="tab-outgoing">
+    {% if outgoing %}
+    {% for offer in outgoing %}
+    <div class="trade-card">
+      <div style="display:flex;gap:0;margin-bottom:10px;">
+        <div class="trade-side">
+          <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:5px;">You Offer</div>
+          {% if offer.cash_offered %}<div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;color:var(--green);margin-bottom:4px;">${{ offer.cash_offered|floatformat:0 }}</div>{% endif %}
+          {% for p in offer.players_offered.all %}<span class="player-tag"><span class="pos" style="font-size:0.6rem;">{{ p.position }}</span> {{ p.name }}</span>{% endfor %}
+        </div>
+        <div class="trade-arrow">→</div>
+        <div class="trade-side" style="text-align:right;">
+          <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:5px;">You Want</div>
+          {% if offer.cash_wanted %}<div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;color:var(--red);margin-bottom:4px;">${{ offer.cash_wanted|floatformat:0 }}</div>{% endif %}
+          {% for p in offer.players_wanted.all %}<span class="player-tag"><span class="pos" style="font-size:0.6rem;">{{ p.position }}</span> {{ p.name }}</span>{% endfor %}
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <span style="font-weight:600;">To: {{ offer.to_manager.display_name|default:offer.to_manager.username }}</span>
+          <span class="badge {% if offer.status == 'pending' %}badge-gold{% elif offer.status == 'accepted' %}badge-green{% else %}badge-dim{% endif %}" style="margin-left:8px;">{{ offer.get_status_display }}</span>
+        </div>
+        {% if offer.status == 'pending' %}
+        <button class="btn btn-ghost btn-sm" onclick="cancelTrade({{ offer.pk }})">Cancel</button>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div style="color:var(--text-dim);padding:40px 0;text-align:center;">No outgoing offers.</div>
+    {% endif %}
+  </div>
+
+  <!-- NEW OFFER -->
+  <div class="tab-panel" id="tab-new">
+    <div class="card" style="max-width:600px;">
+      <div class="card-title">Build an Offer</div>
+
+      <div style="margin-bottom:14px;">
+        <label class="form-label">Send to</label>
+        <select id="trade-to" class="form-input" onchange="loadTheirSquad()">
+          <option value="">Select manager…</option>
+          {% for user in participants %}<option value="{{ user.pk }}">{{ user.display_name|default:user.username }}</option>{% endfor %}
+        </select>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:14px;">
+        <div>
+          <div style="font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">You Offer</div>
+          <label class="form-label">Cash ($)</label>
+          <input type="number" id="cash-offered" class="form-input" placeholder="0" style="margin-bottom:10px;" min="0" step="500000">
+          <label class="form-label">Players</label>
+          <div class="player-select-area" id="my-players">
+            {% if my_squad %}
+            {% for slot in my_squad.squadslot_set.all %}
+            <label class="p-checkbox">
+              <input type="checkbox" name="players_offered" value="{{ slot.player.pk }}">
+              <span class="pos" style="font-size:0.6rem;">{{ slot.player.position }}</span>
+              {{ slot.player.name }} <span style="color:var(--gold);">{{ slot.player.overall }}</span>
+            </label>
+            {% endfor %}
+            {% else %}<div style="color:var(--text-dim);font-size:0.82rem;">No players yet.</div>{% endif %}
+          </div>
+        </div>
+        <div>
+          <div style="font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">You Want</div>
+          <label class="form-label">Cash ($)</label>
+          <input type="number" id="cash-wanted" class="form-input" placeholder="0" style="margin-bottom:10px;" min="0" step="500000">
+          <label class="form-label">Their Players</label>
+          <div class="player-select-area" id="their-players">
+            <div style="color:var(--text-dim);font-size:0.82rem);">Select a manager first.</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:14px;">
+        <label class="form-label">Message (optional)</label>
+        <input type="text" id="trade-message" class="form-input" placeholder="e.g. Fair swap?">
+      </div>
+
+      <button class="btn btn-gold" onclick="sendOffer()">Send Offer</button>
+      <div id="offer-err" style="color:var(--red);font-size:0.82rem;margin-top:8px;display:none;"></div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="tab-panel" id="tab-history">
+    {% if history %}
+    {% for offer in history %}
+    <div class="trade-card" style="opacity:0.7;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
+        <div style="font-size:0.85rem;">
+          <strong>{{ offer.from_manager.display_name|default:offer.from_manager.username }}</strong> → <strong>{{ offer.to_manager.display_name|default:offer.to_manager.username }}</strong>
+          · {% if offer.cash_offered %}${{ offer.cash_offered|floatformat:0 }}{% endif %}
+          {% for p in offer.players_offered.all %}{{ p.name }}{% endfor %}
+          ⇄
+          {% if offer.cash_wanted %}${{ offer.cash_wanted|floatformat:0 }}{% endif %}
+          {% for p in offer.players_wanted.all %}{{ p.name }}{% endfor %}
+        </div>
+        <span class="badge trade-status-{{ offer.status }}">{{ offer.get_status_display }}</span>
+      </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div style="color:var(--text-dim);padding:40px 0;text-align:center;">No trade history yet.</div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CSRF = '{{ csrf_token }}';
+const COMP = {{ competition.pk }};
+
+const otherSquads = {
+  {% for uid, sq in other_squads.items %}
+  "{{ uid }}": [{% for slot in sq.squadslot_set.all %}{"id":{{ slot.player.pk }},"name":"{{ slot.player.name }}","pos":"{{ slot.player.position }}","ovr":{{ slot.player.overall }}},{% endfor %}],
+  {% endfor %}
+};
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+function loadTheirSquad() {
+  const uid = document.getElementById('trade-to').value;
+  const el = document.getElementById('their-players');
+  if (!uid || !otherSquads[uid] || !otherSquads[uid].length) {
+    el.innerHTML = '<div style="color:var(--text-dim);font-size:0.82rem;">No players.</div>'; return;
+  }
+  el.innerHTML = otherSquads[uid].map(p => `
+    <label class="p-checkbox">
+      <input type="checkbox" name="players_wanted" value="${p.id}">
+      <span class="pos" style="font-size:0.6rem;">${p.pos}</span> ${p.name} <span style="color:var(--gold);">${p.ovr}</span>
+    </label>
+  `).join('');
+}
+
+async function sendOffer() {
+  const errEl = document.getElementById('offer-err');
+  errEl.style.display = 'none';
+  const to = document.getElementById('trade-to').value;
+  if (!to) { errEl.textContent = 'Select a manager.'; errEl.style.display='block'; return; }
+  const fd = new FormData();
+  fd.append('to_manager', to);
+  fd.append('cash_offered', document.getElementById('cash-offered').value || 0);
+  fd.append('cash_wanted', document.getElementById('cash-wanted').value || 0);
+  fd.append('message', document.getElementById('trade-message').value);
+  document.querySelectorAll('[name="players_offered"]:checked').forEach(cb => fd.append('players_offered', cb.value));
+  document.querySelectorAll('[name="players_wanted"]:checked').forEach(cb => fd.append('players_wanted', cb.value));
+  const res = await fetch(`/auction/${COMP}/trades/create/`, {
+    method:'POST', body:fd, headers:{'X-CSRFToken':CSRF}
+  });
+  const data = await res.json();
+  if (data.ok) location.reload();
+  else { errEl.textContent = data.error; errEl.style.display='block'; }
+}
+
+async function respondTrade(id, action) {
+  const fd = new FormData();
+  fd.append('action', action);
+  const res = await fetch(`/auction/trade/${id}/respond/`, {
+    method:'POST', body:fd, headers:{'X-CSRFToken':CSRF}
+  });
+  const data = await res.json();
+  if (data.ok) location.reload();
+  else alert(data.error);
+}
+
+async function cancelTrade(id) {
+  const fd = new FormData();
+  const res = await fetch(`/auction/trade/${id}/cancel/`, {
+    method:'POST', body:fd, headers:{'X-CSRFToken':CSRF}
+  });
+  const data = await res.json();
+  if (data.ok) location.reload();
+}
+</script>
+{% endblock %}

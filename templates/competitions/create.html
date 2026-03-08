@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}New Competition — Transfer Market{% endblock %}
+{% block content %}
+<div class="container" style="max-width:560px;">
+  <div class="page-header">
+    <a href="/" style="color:var(--text-dim);font-size:0.85rem;">← Back</a>
+    <div class="page-title" style="margin-top:8px;">New Competition</div>
+  </div>
+  <form method="post">
+    {% csrf_token %}
+
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title">Basics</div>
+      <div style="margin-bottom:14px;">
+        <label style="display:block;font-size:0.78rem;font-weight:600;color:var(--text-dim);margin-bottom:6px;letter-spacing:0.06em;text-transform:uppercase;">Competition Name</label>
+        <input type="text" name="name" placeholder="e.g. Lads Draft 2026" required
+          style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Barlow',sans-serif;font-size:0.95rem;padding:10px 14px;outline:none;">
+      </div>
+      <div>
+        <label style="display:block;font-size:0.78rem;font-weight:600;color:var(--text-dim);margin-bottom:6px;letter-spacing:0.06em;text-transform:uppercase;">Format</label>
+        <select name="format"
+          style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Barlow',sans-serif;font-size:0.95rem;padding:10px 14px;outline:none;">
+          <option value="league">League</option>
+          <option value="knockout">Knockout Cup</option>
+          <option value="group_knockout">Group Stage + Knockout</option>
+          <option value="round_robin">Round Robin</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title">Budget &amp; Bidding</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+
+        <div>
+          <label style="display:block;font-size:0.78rem;font-weight:600;color:var(--text-dim);margin-bottom:6px;letter-spacing:0.06em;text-transform:uppercase;">Starting Budget ($)</label>
+          <input type="number" name="starting_budget" value="100000000" min="1000000"
+            style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.95rem;padding:10px 14px;outline:none;">
+          <div style="font-size:0.72rem;color:var(--text-dim);margin-top:4px;">$100M default</div>
+        </div>
+
+        <div>
+          <label style="display:block;font-size:0.78rem;font-weight:600;color:var(--text-dim);margin-bottom:6px;letter-spacing:0.06em;text-transform:uppercase;">Min Bid Increment ($)</label>
+          <input type="number" name="min_bid_increment" value="500000" min="100000"
+            style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.95rem;padding:10px 14px;outline:none;">
+          <div style="font-size:0.72rem;color:var(--text-dim);margin-top:4px;">$500K default</div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title">Player Pool</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+
+        <div>
+          <label style="display:block;font-size:0.78rem;font-weight:600;color:var(--text-dim);margin-bottom:6px;letter-spacing:0.06em;text-transform:uppercase;">Squad Size</label>
+          <input type="number" name="squad_size" value="18" min="11" max="30"
+            style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.95rem;padding:10px 14px;outline:none;">
+          <div style="font-size:0.72rem;color:var(--text-dim);margin-top:4px;">Players per team</div>
+        </div>
+
+        <div>
+          <label style="display:block;font-size:0.78rem;font-weight:600;color:var(--text-dim);margin-bottom:6px;letter-spacing:0.06em;text-transform:uppercase;">Minimum OVR</label>
+          <input type="number" name="min_player_rating" value="75" min="50" max="99"
+            style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.95rem;padding:10px 14px;outline:none;">
+          <div style="font-size:0.72rem;color:var(--text-dim);margin-top:4px;">Eligible players for auction</div>
+        </div>
+
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-gold" style="width:100%;padding:13px;font-size:1.05rem;">
+      Create Competition →
+    </button>
+  </form>
+</div>
+{% endblock %}

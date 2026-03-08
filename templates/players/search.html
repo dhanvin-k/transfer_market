@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Players — Transfer Market{% endblock %}
+{% block nav_players %}active{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <div class="page-title">Player Database</div>
+    <div class="page-sub">{{ players|length }}{% if players|length == 60 %}+{% endif %} players — browse, filter, search</div>
+  </div>
+
+  <form method="get" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px;">
+    <input type="text" name="q" value="{{ q }}" placeholder="Search name…"
+      style="flex:1;min-width:160px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.9rem;padding:9px 14px;outline:none;">
+    <select name="position" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.9rem;padding:9px 14px;outline:none;">
+      <option value="">All Positions</option>
+      {% for val,label in positions %}<option value="{{ val }}" {% if val == selected_position %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+    <select name="league" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.9rem;padding:9px 14px;outline:none;">
+      <option value="">All Leagues</option>
+      {% for lg in leagues %}<option value="{{ lg.pk }}" {% if lg.pk|stringformat:"s" == selected_league %}selected{% endif %}>{{ lg.name }}</option>{% endfor %}
+    </select>
+    <input type="number" name="min_ovr" value="{{ min_ovr }}" placeholder="Min OVR" min="50" max="99"
+      style="width:90px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.9rem;padding:9px 14px;outline:none;">
+    <input type="number" name="max_ovr" value="{{ max_ovr }}" placeholder="Max OVR" min="50" max="99"
+      style="width:90px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.9rem;padding:9px 14px;outline:none;">
+    <button type="submit" class="btn btn-gold">Filter</button>
+    <a href="{% url 'player_search' %}" class="btn btn-ghost">Clear</a>
+  </form>
+
+  <div class="card" style="padding:0;overflow:hidden;">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Player</th>
+          <th>Pos</th>
+          <th>OVR</th>
+          <th>Club</th>
+          <th>Stats</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in players %}
+        <tr style="cursor:pointer;" onclick="window.location='{% url 'player_detail' pk=p.pk %}'">
+          <td>
+            <div style="font-weight:600;">{{ p.name }}</div>
+            <div style="font-size:0.75rem;color:var(--text-dim);">{{ p.nationality }} · {{ p.age }}y</div>
+          </td>
+          <td><span class="pos">{{ p.position }}</span></td>
+          <td><span style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;color:var(--gold);">{{ p.overall }}</span></td>
+          <td style="color:var(--text-dim);font-size:0.85rem;">{{ p.club.name|default:"—" }}</td>
+          <td>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              {% for k,v in p.stats_dict.items %}
+              <div class="stat-pill"><span class="stat-val">{{ v }}</span><span class="stat-key">{{ k }}</span></div>
+              {% endfor %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:40px;">No players found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

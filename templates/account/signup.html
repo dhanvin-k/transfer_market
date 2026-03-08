@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}Sign Up — Transfer Market{% endblock %}
+
+{% block content %}
+<div style="display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 53px);padding:40px 20px;">
+  <div class="card" style="max-width:420px;width:100%;">
+    <div style="text-align:center;margin-bottom:24px;">
+      <div style="font-size:2rem;margin-bottom:8px;">⚽</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:900;">Create Account</div>
+      <div style="color:var(--text-dim);font-size:0.88rem;margin-top:4px;">Join the Transfer Market</div>
+    </div>
+
+    <form method="post" action="{% url 'account_signup' %}">
+      {% csrf_token %}
+      {{ redirect_field }}
+
+      {% for field in form %}
+      <div style="margin-bottom:14px;">
+        <label style="display:block;font-size:0.75rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px;">{{ field.label }}</label>
+        {% if field.field.widget.input_type == 'password' %}
+        <input type="password" name="{{ field.html_name }}" autocomplete="{{ field.html_name }}"
+          style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Barlow',sans-serif;font-size:1rem;padding:11px 14px;outline:none;transition:border-color 0.15s;"
+          onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+        {% else %}
+        <input type="text" name="{{ field.html_name }}"
+          style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Barlow',sans-serif;font-size:1rem;padding:11px 14px;outline:none;transition:border-color 0.15s;"
+          onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+        {% endif %}
+        {% if field.errors %}
+        <div style="color:var(--red);font-size:0.78rem;margin-top:4px;">{{ field.errors|join:", " }}</div>
+        {% endif %}
+        {% if field.help_text %}
+        <div style="color:var(--text-dim);font-size:0.72rem;margin-top:3px;">{{ field.help_text }}</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+
+      <button type="submit" class="btn btn-gold" style="width:100%;padding:13px;font-size:1.05rem;margin-top:4px;">Create Account →</button>
+
+      <div style="text-align:center;margin-top:16px;font-size:0.85rem;color:var(--text-dim);">
+        Already have an account? <a href="{% url 'account_login' %}" style="color:var(--gold);">Sign in</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

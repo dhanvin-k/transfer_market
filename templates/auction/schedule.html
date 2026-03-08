@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+{% block title %}Schedule — {{ competition.name }}{% endblock %}
+{% block extra_style %}
+.day-col{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;}
+.day-col-header{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.95rem;margin-bottom:4px;}
+.day-col-meta{font-size:0.72rem;color:var(--text-dim);margin-bottom:10px;}
+.player-chip{display:flex;align-items:center;gap:7px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 10px;margin-bottom:6px;cursor:grab;transition:border-color 0.15s;}
+.player-chip:hover{border-color:var(--gold);}
+.player-chip .pname{font-weight:600;font-size:0.82rem;flex:1;}
+.player-chip .povr{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.9rem;color:var(--gold);}
+.chip-remove{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:1rem;padding:0 2px;line-height:1;}
+.chip-remove:hover{color:var(--red);}
+.schedule-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
+.pool-player{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;margin-bottom:5px;font-size:0.82rem;cursor:pointer;transition:border-color 0.15s;}
+.pool-player:hover{border-color:var(--gold);}
+.pool-player.used{opacity:0.4;pointer-events:none;}
+.setup-form{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:24px;}
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:1200px;">
+  <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+    <div>
+      <div class="page-title">Auction Schedule</div>
+      <div class="page-sub">{{ competition.name }} · Set up daily auction windows</div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <a href="{% url 'auction_room' competition_id=competition.pk %}" class="btn btn-ghost">← Auction Room</a>
+      {% if days %}
+      <button class="btn btn-red btn-sm" onclick="deleteSchedule()">Delete Schedule</button>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if not days %}
+  <!-- GENERATE FORM -->
+  <div class="setup-form">
+    <div class="card-title">Generate Schedule</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:16px;">
+      <div>
+        <label class="slabel" style="display:block;margin-bottom:5px;font-size:0.78rem;font-weight:600;color:var(--text-dim);letter-spacing:0.08em;text-transform:uppercase;">Start Date</label>
+        <input type="date" id="start_date" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:0.9rem;padding:9px 12px;outline:none;">
+      </div>
+      <div>
+        <label class="slabel" style="display:block;margin-bottom:5px;font-size:0.78rem;font-weight:600;color:var(--text-dim);letter-spacing:0.08em;text-transform:uppercase;">Number of Days</label>
+        <input type="number" id="num_days" value="14" min="1" max="60" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:0.9rem;padding:9px 12px;outline:none;">
+      </div>
+      <div>
+        <label class="slabel" style="display:block;margin-bottom:5px;font-size:0.78rem;font-weight:600;color:var(--text-dim);letter-spacing:0.08em;text-transform:uppercase;">Players Per Day</label>
+        <input type="number" id="players_per_day" value="10" min="1" max="50" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:0.9rem;padding:9px 12px;outline:none;">
+      </div>
+      <div>
+        <label class="slabel" style="display:block;margin-bottom:5px;font-size:0.78rem;font-weight:600;color:var(--text-dim);letter-spacing:0.08em;text-transform:uppercase;">Opens (hour, 24h)</label>
+        <input type="number" id="open_hour" value="9" min="0" max="23" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:0.9rem;padding:9px 12px;outline:none;">
+      </div>
+      <div>
+        <label class="slabel" style="display:block;margin-bottom:5px;font-size:0.78rem;font-weight:600;color:var(--text-dim);letter-spacing:0.08em;text-transform:uppercase;">Closes (hour, 24h)</label>
+        <input type="number" id="close_hour" value="15" min="1" max="24" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:0.9rem;padding:9px 12px;outline:none;">
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button class="btn btn-gold" onclick="generateSchedule()">Generate Schedule</button>
+      <span id="gen-status" style="font-size:0.85rem;color:var(--text-dim);"></span>
+    </div>
+  </div>
+  <div style="color:var(--text-dim);font-size:0.88rem;padding:10px 0;">
+    Players will be automatically picked to ensure a diverse mix of positions and ratings across all days.
+    You can re-arrange them after generation.
+  </div>
+
+  {% else %}
+  <!-- SCHEDULE VIEW -->
+  <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:center;">
+    <div style="font-size:0.88rem;color:var(--text-dim);">{{ days|length }} days · drag lots between days to re-arrange</div>
+  </div>
+
+  <div class="schedule-grid" id="schedule-grid">
+    {% for day in days %}
+    <div class="day-col" id="day-{{ day.pk }}" ondragover="ev.preventDefault()" ondrop="dropLot(event, {{ day.pk }}, '{{ day.date|date:'Y-m-d' }}')">
+      <div class="day-col-header">{{ day.date|date:"D M j" }}{% if day.label %} — {{ day.label }}{% endif %}</div>
+      <div class="day-col-meta">
+        {{ day.opens_at|time:"g:i A" }} – {{ day.closes_at|time:"g:i A" }} ·
+        {% if day.is_open %}<span style="color:var(--green);">Open</span>
+        {% elif day.is_past %}<span style="color:var(--text-dim);">Past</span>
+        {% else %}<span style="color:var(--text-dim);">{{ day.lots.count }} players</span>{% endif %}
+      </div>
+      <div class="day-lots" id="lots-{{ day.pk }}">
+        {% for lot in day.lots.all %}
+        <div class="player-chip" draggable="true" ondragstart="dragStart(event, {{ lot.pk }})" id="chip-{{ lot.pk }}">
+          <span class="pos" style="font-size:0.62rem;flex-shrink:0;">{{ lot.player.position }}</span>
+          <span class="pname">{{ lot.player.name }}</span>
+          <span class="povr">{{ lot.player.overall }}</span>
+          {% if not day.is_past %}
+          <button class="chip-remove" onclick="removeLot(event, {{ lot.pk }})">×</button>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% if not day.is_past %}
+      <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:8px;" onclick="showAddPlayer({{ day.pk }}, '{{ day.date|date:'Y-m-d' }}')">+ Add Player</button>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Add player modal -->
+  <div id="add-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;align-items:flex-start;justify-content:center;padding:60px 20px;overflow-y:auto;">
+    <div class="card" style="max-width:500px;width:100%;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.2rem;">Add Player to Day <span id="modal-day-label"></span></div>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('add-modal').style.display='none'">Close</button>
+      </div>
+      <input type="text" id="pool-search" placeholder="Search player…" oninput="filterPool()" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:0.9rem;padding:9px 12px;outline:none;margin-bottom:12px;">
+      <div id="pool-list" style="max-height:400px;overflow-y:auto;"></div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CSRF = '{{ csrf_token }}';
+const COMP = {{ competition.pk }};
+let activeDayPk = null;
+let activeDayDate = null;
+let draggedLotId = null;
+
+// Set default start date to tomorrow
+document.addEventListener('DOMContentLoaded', () => {
+  const d = new Date(); d.setDate(d.getDate() + 1);
+  const el = document.getElementById('start_date');
+  if (el) el.value = d.toISOString().slice(0,10);
+});
+
+async function generateSchedule() {
+  const st = document.getElementById('gen-status');
+  st.textContent = 'Generating…';
+  const fd = new FormData();
+  fd.append('num_days', document.getElementById('num_days').value);
+  fd.append('players_per_day', document.getElementById('players_per_day').value);
+  fd.append('start_date', document.getElementById('start_date').value);
+  fd.append('open_hour', document.getElementById('open_hour').value);
+  fd.append('close_hour', document.getElementById('close_hour').value);
+  const res = await fetch(`/auction/${COMP}/schedule/generate/`, {
+    method:'POST', body:fd, headers:{'X-CSRFToken':CSRF}
+  });
+  const data = await res.json();
+  if (data.ok) location.reload();
+  else { st.textContent = data.error; st.style.color = 'var(--red)'; }
+}
+
+async function deleteSchedule() {
+  if (!confirm('Delete the entire schedule? This cannot be undone.')) return;
+  const res = await fetch(`/auction/${COMP}/schedule/delete/`, {
+    method:'POST', headers:{'X-CSRFToken':CSRF}
+  });
+  const data = await res.json();
+  if (data.ok) location.reload();
+}
+
+function dragStart(ev, lotId) {
+  draggedLotId = lotId;
+  ev.dataTransfer.effectAllowed = 'move';
+}
+
+async function dropLot(ev, dayPk, dayDate) {
+  ev.preventDefault();
+  if (!draggedLotId) return;
+  const fd = new FormData();
+  fd.append('lot_id', draggedLotId);
+  fd.append('to_date', dayDate);
+  const res = await fetch(`/auction/${COMP}/schedule/move/`, {
+    method:'POST', body:fd, headers:{'X-CSRFToken':CSRF}
+  });
+  const data = await res.json();
+  if (data.ok) location.reload();
+  else alert(data.error);
+  draggedLotId = null;
+}
+
+const allPlayers = {{ all_players_json|default:"[]"|safe }};
+let usedPlayerIds = new Set({{ used_ids_json|default:"[]"|safe }});
+
+function showAddPlayer(dayPk, dayDate) {
+  activeDayPk = dayPk;
+  activeDayDate = dayDate;
+  document.getElementById('modal-day-label').textContent = dayDate;
+  document.getElementById('pool-search').value = '';
+  renderPool(allPlayers);
+  document.getElementById('add-modal').style.display = 'flex';
+}
+
+function filterPool() {
+  const q = document.getElementById('pool-search').value.toLowerCase();
+  renderPool(allPlayers.filter(p => p.name.toLowerCase().includes(q) || p.position.includes(q.toUpperCase())));
+}
+
+function renderPool(list) {
+  const el = document.getElementById('pool-list');
+  el.innerHTML = list.slice(0,50).map(p => `
+    <div class="pool-player ${usedPlayerIds.has(p.id) ? 'used' : ''}" onclick="addPlayerToDay(${p.id}, '${p.name}', '${p.position}', ${p.overall})">
+      <span class="pos" style="font-size:0.62rem;">${p.position}</span>
+      <span style="flex:1;font-weight:600;">${p.name}</span>
+      <span style="font-family:'Barlow Condensed',sans-serif;font-weight:900;color:var(--gold);">${p.overall}</span>
+      <span style="font-size:0.72rem;color:var(--text-dim);">${p.club||''}</span>
+    </div>
+  `).join('');
+}
+
+async function addPlayerToDay(playerId, name, pos, ovr) {
+  // Create a new lot on this day via the move endpoint isn't right — need add endpoint
+  // For now send as a move from no day — we'll use a dedicated add endpoint
+  const fd = new FormData();
+  fd.append('player_id', playerId);
+  fd.append('day_date', activeDayDate);
+  const res = await fetch(`/auction/${COMP}/schedule/add-lot/`, {
+    method:'POST', body:fd, headers:{'X-CSRFToken':CSRF}
+  });
+  const data = await res.json();
+  if (data.ok) { document.getElementById('add-modal').style.display='none'; location.reload(); }
+  else alert(data.error);
+}
+
+async function removeLot(ev, lotId) {
+  ev.stopPropagation();
+  const fd = new FormData();
+  fd.append('lot_id', lotId);
+  const res = await fetch(`/auction/${COMP}/schedule/remove-lot/`, {
+    method:'POST', body:fd, headers:{'X-CSRFToken':CSRF}
+  });
+  const data = await res.json();
+  if (data.ok) document.getElementById('chip-'+lotId).remove();
+  else alert(data.error);
+}
+</script>
+{% endblock %}

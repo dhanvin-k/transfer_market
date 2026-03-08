@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Fixtures — {{ competition.name }}{% endblock %}
+{% block nav_fixtures %}active{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+    <div>
+      <div class="page-title">Fixtures</div>
+      <div class="page-sub">{{ competition.name }} · {{ competition.get_format_display }}</div>
+    </div>
+    {% if not rounds and request.user == competition.created_by %}
+    <button class="btn btn-gold" onclick="generateFixtures()">Generate Fixtures</button>
+    {% endif %}
+  </div>
+
+  {% if rounds %}
+    {% for rnum, fixtures in rounds.items %}
+    <div style="margin-bottom:24px;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.75rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;">Round {{ rnum }}</div>
+      <div class="card" style="padding:0;overflow:hidden;">
+        {% for fixture in fixtures %}
+        <div class="fixture-row">
+          <div class="fixture-team home">
+            <span class="team-name">{{ fixture.home.display_name|default:fixture.home.username }}</span>
+          </div>
+          <div class="fixture-score">
+            {% if fixture.is_completed %}
+              <span style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem;">{{ fixture.result.home_score }} – {{ fixture.result.away_score }}</span>
+            {% else %}
+              <span style="color:var(--text-dim);">vs</span>
+              {% if request.user == fixture.home or request.user == fixture.away or request.user == competition.created_by %}
+              <button class="btn btn-ghost btn-sm" onclick="showResultForm({{ fixture.pk }})">+ Result</button>
+              {% endif %}
+            {% endif %}
+          </div>
+          <div class="fixture-team away">
+            <span class="team-name">{{ fixture.away.display_name|default:fixture.away.username }}</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+  <div style="text-align:center;padding:60px 20px;color:var(--text-dim);">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:700;margin-bottom:8px;">No fixtures yet</div>
+    <p>{% if request.user == competition.created_by %}Click "Generate Fixtures" to create the schedule.{% else %}Waiting for the host to generate fixtures.{% endif %}</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Result modal -->
+<div id="result-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:200;align-items:center;justify-content:center;">
+  <div class="card" style="max-width:340px;width:90%;">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem;margin-bottom:16px;">Enter Result</div>
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;">
+      <input type="number" id="home-score" min="0" max="99" placeholder="0" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:700;padding:10px;text-align:center;outline:none;">
+      <span style="color:var(--text-dim);">–</span>
+      <input type="number" id="away-score" min="0" max="99" placeholder="0" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:700;padding:10px;text-align:center;outline:none;">
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-gold" style="flex:1;" onclick="submitResult()">Save</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('result-modal').style.display='none'">Cancel</button>
+    </div>
+    <div id="result-error" style="color:var(--red);font-size:0.82rem;margin-top:8px;display:none;"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_style %}
+.fixture-row{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);}
+.fixture-row:last-child{border-bottom:none;}
+.fixture-team{flex:1;}
+.fixture-team.home{text-align:right;}
+.fixture-team.away{text-align:left;}
+.fixture-score{width:140px;text-align:center;flex-shrink:0;}
+.team-name{font-weight:600;font-size:0.9rem;}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let activeFixtureId = null;
+function showResultForm(id) {
+  activeFixtureId = id;
+  document.getElementById('home-score').value = '';
+  document.getElementById('away-score').value = '';
+  document.getElementById('result-error').style.display = 'none';
+  document.getElementById('result-modal').style.display = 'flex';
+}
+async function submitResult() {
+  const hs = document.getElementById('home-score').value;
+  const as_ = document.getElementById('away-score').value;
+  const fd = new FormData();
+  fd.append('home_score', hs); fd.append('away_score', as_);
+  const res = await fetch(`/fixtures/result/${activeFixtureId}/`, {
+    method:'POST', body: fd,
+    headers:{'X-CSRFToken': '{{ csrf_token }}'}
+  });
+  const data = await res.json();
+  if (data.ok) location.reload();
+  else {
+    document.getElementById('result-error').textContent = data.error;
+    document.getElementById('result-error').style.display = 'block';
+  }
+}
+async function generateFixtures() {
+  const res = await fetch(`/fixtures/{{ competition.pk }}/generate/`, {
+    method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}'}
+  });
+  const data = await res.json();
+  if (data.ok) location.reload();
+  else alert(data.error);
+}
+</script>
+{% endblock %}
