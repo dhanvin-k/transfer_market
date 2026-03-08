@@ -67,4 +67,6 @@ celerybeat-schedule
 celerybeat.pid
 
 # Redis dump
-dump.rdb
+dump.rdbcelerybeat-schedule-wal
+celerybeat-schedule
+celerybeat-schedule-wal
