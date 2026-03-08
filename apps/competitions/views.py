@@ -26,6 +26,7 @@ def home(request):
 @login_required
 def competition_detail(request, competition_id):
     comp = get_object_or_404(Competition, pk=competition_id)
+    request.session['active_competition_id'] = competition_id
     budget = CompetitionBudget.objects.filter(competition=comp, user=request.user).first()
     from apps.squads.models import Squad
     my_squad = Squad.objects.filter(competition=comp, manager=request.user).first()

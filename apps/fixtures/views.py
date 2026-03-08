@@ -11,6 +11,7 @@ from .models import Fixture, Result
 @login_required
 def fixture_list(request, competition_id):
     comp = get_object_or_404(Competition, pk=competition_id)
+    request.session['active_competition_id'] = competition_id
     fixtures = (Fixture.objects.filter(competition=comp)
                 .select_related('home', 'away', 'result')
                 .order_by('round_number', 'leg'))

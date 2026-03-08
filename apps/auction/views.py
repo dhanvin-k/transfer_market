@@ -18,6 +18,7 @@ from .models import AuctionSession, AuctionDay, AuctionLot, Bid, TradeOffer
 @login_required
 def auction_room(request, competition_id):
     comp = get_object_or_404(Competition, pk=competition_id)
+    request.session['active_competition_id'] = competition_id
     _check_participant(request.user, comp)
 
     session, _ = AuctionSession.objects.get_or_create(competition=comp)
@@ -115,8 +116,14 @@ def generate_schedule(request, competition_id):
     with transaction.atomic():
         for day_idx in range(num_days):
             d = start_date + datetime.timedelta(days=day_idx)
-            opens  = datetime.datetime(d.year, d.month, d.day, open_hour, 0, tzinfo=datetime.timezone.utc)
-            closes = datetime.datetime(d.year, d.month, d.day, close_hour, 0, tzinfo=datetime.timezone.utc)
+            import zoneinfo
+            tz_name = request.POST.get('timezone', 'UTC')
+            try:
+                tz = zoneinfo.ZoneInfo(tz_name)
+            except Exception:
+                tz = datetime.timezone.utc
+            opens  = datetime.datetime(d.year, d.month, d.day, open_hour, 0, tzinfo=tz)
+            closes = datetime.datetime(d.year, d.month, d.day, close_hour, 0, tzinfo=tz)
             day = AuctionDay.objects.create(session=session, date=d, opens_at=opens, closes_at=closes)
             day_players = selected[day_idx * players_per_day:(day_idx + 1) * players_per_day]
             lots = [
@@ -230,6 +237,7 @@ def place_bid(request, lot_id):
 @login_required
 def trade_hub(request, competition_id):
     comp = get_object_or_404(Competition, pk=competition_id)
+    request.session['active_competition_id'] = competition_id
     _check_participant(request.user, comp)
 
     incoming = TradeOffer.objects.filter(

@@ -57,6 +57,19 @@
         <label class="slabel" style="display:block;margin-bottom:5px;font-size:0.78rem;font-weight:600;color:var(--text-dim);letter-spacing:0.08em;text-transform:uppercase;">Closes (hour, 24h)</label>
         <input type="number" id="close_hour" value="15" min="1" max="24" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:0.9rem;padding:9px 12px;outline:none;">
       </div>
+      <div>
+        <label class="slabel" style="display:block;margin-bottom:5px;font-size:0.78rem;font-weight:600;color:var(--text-dim);letter-spacing:0.08em;text-transform:uppercase;">Your Timezone</label>
+        <select id="timezone" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:0.9rem;padding:9px 12px;outline:none;">
+          <option value="America/Chicago">Chicago / Dallas (CT)</option>
+          <option value="America/New_York">New York (ET)</option>
+          <option value="America/Denver">Denver (MT)</option>
+          <option value="America/Los_Angeles">Los Angeles (PT)</option>
+          <option value="Europe/London">London (GMT/BST)</option>
+          <option value="Asia/Kolkata">India (IST)</option>
+          <option value="UTC">UTC</option>
+        </select>
+        <div style="font-size:0.7rem;color:var(--text-dim);margin-top:3px;">Hours above are in this timezone</div>
+      </div>
     </div>
     <div style="display:flex;align-items:center;gap:12px;">
       <button class="btn btn-gold" onclick="generateSchedule()">Generate Schedule</button>
@@ -143,6 +156,7 @@ async function generateSchedule() {
   fd.append('start_date', document.getElementById('start_date').value);
   fd.append('open_hour', document.getElementById('open_hour').value);
   fd.append('close_hour', document.getElementById('close_hour').value);
+  fd.append('timezone', document.getElementById('timezone').value);
   const res = await fetch(`/auction/${COMP}/schedule/generate/`, {
     method:'POST', body:fd, headers:{'X-CSRFToken':CSRF}
   });

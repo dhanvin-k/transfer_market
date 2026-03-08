@@ -115,12 +115,30 @@
     <a href="{% url 'squad_view' competition_id=competition.pk %}" class="nav-link {% block nav_squads %}{% endblock %}">Squads</a>
     <a href="{% url 'fixture_list' competition_id=competition.pk %}" class="nav-link {% block nav_fixtures %}{% endblock %}">Fixtures</a>
     <a href="{% url 'leaderboard' competition_id=competition.pk %}" class="nav-link {% block nav_records %}{% endblock %}">Table</a>
-    <a href="{% url 'player_search' %}" class="nav-link {% block nav_players %}{% endblock %}">Players</a>
     <a href="{% url 'trade_hub' competition_id=competition.pk %}" class="nav-link {% block nav_trades %}{% endblock %}">Trades</a>
+    <a href="{% url 'player_search' %}" class="nav-link {% block nav_players %}{% endblock %}">Players</a>
     {% else %}
     <a href="{% url 'player_search' %}" class="nav-link">Players</a>
     {% endif %}
   </div>
+  {% if user_competitions|length > 1 %}
+  <div style="border-left:1px solid var(--border);padding:0 12px;display:flex;align-items:center;position:relative;" id="comp-switcher">
+    <button onclick="document.getElementById('comp-menu').classList.toggle('open')"
+      style="background:none;border:none;color:var(--text-dim);font-family:'Barlow Condensed',sans-serif;font-size:0.82rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;gap:5px;padding:4px 0;">
+      {% if competition %}{{ competition.name|truncatechars:16 }}{% else %}Switch{% endif %} ▾
+    </button>
+    <div id="comp-menu" style="display:none;position:absolute;top:calc(100% + 4px);left:0;background:var(--bg2);border:1px solid var(--border);border-radius:8px;min-width:180px;z-index:200;overflow:hidden;">
+      {% for c in user_competitions %}
+      <a href="{% url 'competition_detail' competition_id=c.pk %}"
+        style="display:block;padding:10px 14px;font-size:0.85rem;border-bottom:1px solid var(--border);{% if competition and c.pk == competition.pk %}color:var(--gold);font-weight:600;{% else %}color:var(--text);{% endif %}">
+        {{ c.name }}
+      </a>
+      {% endfor %}
+      <a href="/" style="display:block;padding:10px 14px;font-size:0.82rem;color:var(--text-dim);">All competitions →</a>
+    </div>
+  </div>
+  <style>#comp-menu.open{display:block!important;}</style>
+  {% endif %}
   <div class="nav-right">
     <span class="nav-user">{{ request.user.display_name|default:request.user.username }}</span>
     <a href="/" class="btn btn-ghost btn-sm">My Comps</a>

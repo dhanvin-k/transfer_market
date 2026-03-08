@@ -7,6 +7,7 @@ from .models import PlayerRecord, H2HRecord
 @login_required
 def leaderboard(request, competition_id):
     comp = get_object_or_404(Competition, pk=competition_id)
+    request.session['active_competition_id'] = competition_id
     participants = list(comp.participants.all())
     records = []
     for user in participants:

@@ -7,6 +7,7 @@ from .models import Squad, SquadSlot
 @login_required
 def squad_view(request, competition_id):
     comp = get_object_or_404(Competition, pk=competition_id)
+    request.session['active_competition_id'] = competition_id
     squads = (Squad.objects.filter(competition=comp)
               .select_related('manager')
               .prefetch_related('squadslot_set__player__club'))
